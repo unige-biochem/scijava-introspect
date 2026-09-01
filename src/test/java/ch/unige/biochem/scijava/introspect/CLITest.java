@@ -351,4 +351,32 @@ public class CLITest {
         // A command without a menu path is still listed in the package hierarchy
         assertTrue(result.stdout.contains("NoMenuCommand"));
     }
+
+    // --- resilience to a partially resolvable classpath ---
+
+    @Test
+    public void describeCommandReportsUnloadableClassWithoutAbortingTheRun() {
+        // In the field this happens when a plugin's own dependencies were not added to the
+        // invocation, so reading its fields raises NoClassDefFoundError. That cannot be
+        // staged here without classpath surgery, so UnloadableCommand fails in its static
+        // initializer instead: a different LinkageError reaching the same handler. What
+        // matters is that it is reported per class, and does not cost the other classes
+        // their output.
+        CLI.Result result = CLI.run(new String[]{"describe-command",
+                "ch.unige.biochem.scijava.introspect.DummySumCommand",
+                "ch.unige.biochem.scijava.introspect.UnloadableCommand",
+                "ch.unige.biochem.scijava.introspect.DummySumCommand"});
+        assertEquals(0, result.exitCode);
+
+        JsonArray arr = JsonParser.parseString(result.stdout).getAsJsonArray();
+        assertEquals(3, arr.size());
+
+        assertTrue(arr.get(0).getAsJsonObject().has("input"));
+        assertTrue(arr.get(2).getAsJsonObject().has("input"));
+
+        JsonObject failed = arr.get(1).getAsJsonObject();
+        assertEquals("ch.unige.biochem.scijava.introspect.UnloadableCommand",
+                failed.get("name").getAsString());
+        assertTrue(failed.get("error").getAsString().contains("could not be resolved"));
+    }
 }

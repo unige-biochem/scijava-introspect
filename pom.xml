@@ -110,12 +110,23 @@
 
 	<dependencies>
 
-		<!-- Brings in scijava-common (Command, Plugin, Context) and scijava-search
-		     (SourceFinder), plus a broad enough classpath for the plugin classes that
-		     users append to the jgo invocation to resolve. -->
+		<!-- Command, Plugin, Parameter, Context, Service, Button -->
 		<dependency>
-			<groupId>net.imagej</groupId>
-			<artifactId>imagej</artifactId>
+			<groupId>org.scijava</groupId>
+			<artifactId>scijava-common</artifactId>
+		</dependency>
+
+		<!-- SourceFinder, for the source-code subcommand -->
+		<dependency>
+			<groupId>org.scijava</groupId>
+			<artifactId>scijava-search</artifactId>
+		</dependency>
+
+		<!-- JSON output. Also reachable transitively, but named here because this is
+		     the format every subcommand but `tree` emits. -->
+		<dependency>
+			<groupId>com.google.code.gson</groupId>
+			<artifactId>gson</artifactId>
 		</dependency>
 
 		<dependency>

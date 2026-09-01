@@ -13,6 +13,14 @@ server — **no running Fiji instance is ever needed**, only the target plugin c
 Anything that requires a live ImageJ instance (running Groovy, driving the script editor, reporting
 open images) belongs in the MCP server repository, not here.
 
+## Dependencies
+
+Deliberately narrow: `scijava-common`, `scijava-search`, `gson`, `reflections` — 13 jars, not 240.
+The repo introspects `org.scijava.command.Command` and needs nothing from ImageJ2 itself. The
+target plugin brings its own dependencies through jgo's `+` syntax, which is where ImageJ2
+comes from when the target needs it. Do not add `net.imagej:imagej` back to widen the
+classpath — that is the caller's job.
+
 ## Build
 
 Maven project inheriting from `pom-scijava` 43.0.0. Java 9 source/target.
@@ -47,6 +55,9 @@ Key patterns:
 - Parameters are collected from the command **and its whole superclass chain**.
 - GitHub URLs are rewritten to `raw.githubusercontent.com` for source fetching.
 - All JSON serialization uses Gson with pretty printing.
+- A class that cannot be resolved (its own dependencies are absent) is reported as a per-class
+  `error` entry; it never aborts the run, so one broken plugin cannot cost a whole package
+  scan its output.
 - `tree` is the only subcommand that returns plain text rather than JSON.
 
 ## CLI Subcommands

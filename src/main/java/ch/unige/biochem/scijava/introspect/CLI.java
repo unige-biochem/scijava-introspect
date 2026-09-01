@@ -135,9 +135,24 @@ public class CLI {
                 error.addProperty("name", className);
                 error.addProperty("error", "Class not found: " + e.getMessage());
                 result.add(error);
+            } catch (LinkageError e) {
+                JsonObject error = new JsonObject();
+                error.addProperty("name", className);
+                error.addProperty("error", unresolvableMessage(e));
+                result.add(error);
             }
         }
         return Result.success(GSON.toJson(result));
+    }
+
+    /**
+     * The class itself was found, but loading it or reading its fields needs a type that is
+     * not on the classpath. This is the common shape of a missing plugin dependency, so it
+     * is reported per class rather than being allowed to abort the whole run.
+     */
+    private static String unresolvableMessage(LinkageError e) {
+        return "Class could not be resolved, usually because a dependency is missing from the classpath: "
+                + e.getClass().getSimpleName() + ": " + e.getMessage();
     }
 
     private static Result sourceCode(String[] classNames) {
@@ -151,6 +166,8 @@ public class CLI {
                     result.addProperty(className, source);
                 } catch (ClassNotFoundException e) {
                     result.addProperty(className, "Error: Class not found: " + e.getMessage());
+                } catch (LinkageError e) {
+                    result.addProperty(className, "Error: " + unresolvableMessage(e));
                 } catch (RuntimeException e) {
                     result.addProperty(className, "Error: " + e.getMessage());
                 }
@@ -173,10 +190,17 @@ public class CLI {
         for (String pkg : packages) {
             List<Class<? extends Command>> commands = CommandInvestigator.getCommandsFromPackage(pkg);
             for (Class<? extends Command> cmd : commands) {
-                String json = CommandInvestigator.toJson(cmd);
-                JsonArray parsed = JsonParser.parseString(json).getAsJsonArray();
-                if (parsed.size() > 0) {
-                    result.add(cmd.getName(), parsed.get(0));
+                try {
+                    String json = CommandInvestigator.toJson(cmd);
+                    JsonArray parsed = JsonParser.parseString(json).getAsJsonArray();
+                    if (parsed.size() > 0) {
+                        result.add(cmd.getName(), parsed.get(0));
+                    }
+                } catch (LinkageError e) {
+                    JsonObject error = new JsonObject();
+                    error.addProperty("name", cmd.getName());
+                    error.addProperty("error", unresolvableMessage(e));
+                    result.add(cmd.getName(), error);
                 }
             }
         }
@@ -275,8 +299,14 @@ public class CLI {
         for (String pkg : packages) {
             List<Class<? extends Command>> commands = CommandInvestigator.getCommandsFromPackage(pkg);
             for (Class<? extends Command> cmd : commands) {
-                Plugin plugin = cmd.getAnnotation(Plugin.class);
-                String menuPath = CommandInvestigator.resolveMenuPath(plugin);
+                String menuPath;
+                try {
+                    Plugin plugin = cmd.getAnnotation(Plugin.class);
+                    menuPath = CommandInvestigator.resolveMenuPath(plugin);
+                } catch (LinkageError e) {
+                    // Keep the command in the tree; only its menu placement is unknown
+                    menuPath = null;
+                }
                 entries.add(new String[]{menuPath, cmd.getName()});
             }
         }
