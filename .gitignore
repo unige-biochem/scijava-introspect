@@ -1,0 +1,26 @@
+# Maven
+/target/
+pom.xml.versionsBackup
+release.properties
+dependency-reduced-pom.xml
+
+# IDEs
+/.idea/
+*.iml
+*.ipr
+*.iws
+/.settings/
+/.classpath
+/.project
+/nbproject/
+/build/
+/out/
+/.vscode/
+
+# Generated snapshots / diffs produced by the CLI
+/*.json
+!/package.json
+
+# OS
+.DS_Store
+Thumbs.db
