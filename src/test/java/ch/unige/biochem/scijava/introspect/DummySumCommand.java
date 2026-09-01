@@ -1,4 +1,4 @@
-package ch.unige.biochem.fiji.tools;
+package ch.unige.biochem.scijava.introspect;
 
 import org.scijava.ItemIO;
 import org.scijava.command.Command;

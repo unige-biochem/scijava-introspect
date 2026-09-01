@@ -1,4 +1,4 @@
-# fiji-tools
+# scijava-introspect
 
 A CLI for introspecting SciJava/ImageJ2 plugin commands — list them, describe their parameters, fetch source code, snapshot a version, and diff two versions. No running Fiji instance needed.
 
@@ -19,7 +19,7 @@ All subcommands follow this pattern:
 ```bash
 jgo -u \
   -r scijava=https://maven.scijava.org/content/groups/public \
-  ch.unige.biochem:fiji-tools:0.1.0-SNAPSHOT:ch.unige.biochem.fiji.tools.CLI \
+  ch.unige.biochem:scijava-introspect:0.1.0-SNAPSHOT:ch.unige.biochem.scijava.introspect.CLI \
   <subcommand> <args...>
 ```
 
@@ -30,7 +30,7 @@ To add plugin dependencies without touching `pom.xml`, append them with `+`:
 ```bash
 jgo -u \
   -r scijava=https://maven.scijava.org/content/groups/public \
-  ch.unige.biochem:fiji-tools:0.1.0-SNAPSHOT+ch.epfl.biop:BIOP-ABBA:0.10.4:ch.unige.biochem.fiji.tools.CLI \
+  ch.unige.biochem:scijava-introspect:0.1.0-SNAPSHOT+ch.epfl.biop:BIOP-ABBA:0.10.4:ch.unige.biochem.scijava.introspect.CLI \
   list-commands ch.epfl.biop.atlas.aligner.command
 ```
 
@@ -43,7 +43,7 @@ List all command class names in a package.
 ```bash
 jgo -u \
   -r scijava=https://maven.scijava.org/content/groups/public \
-  ch.unige.biochem:fiji-tools:0.1.0-SNAPSHOT:ch.unige.biochem.fiji.tools.CLI \
+  ch.unige.biochem:scijava-introspect:0.1.0-SNAPSHOT:ch.unige.biochem.scijava.introspect.CLI \
   list-commands ch.epfl.biop.atlas.aligner.command
 ```
 
@@ -56,7 +56,7 @@ Get structured descriptions of one or more commands (inputs, outputs, types, lab
 ```bash
 jgo -u \
   -r scijava=https://maven.scijava.org/content/groups/public \
-  ch.unige.biochem:fiji-tools:0.1.0-SNAPSHOT:ch.unige.biochem.fiji.tools.CLI \
+  ch.unige.biochem:scijava-introspect:0.1.0-SNAPSHOT:ch.unige.biochem.scijava.introspect.CLI \
   describe-command ch.epfl.biop.atlas.aligner.command.ABBAStartCommand
 ```
 
@@ -85,7 +85,7 @@ Fetch the Java source code of one or more classes from GitHub.
 ```bash
 jgo -u \
   -r scijava=https://maven.scijava.org/content/groups/public \
-  ch.unige.biochem:fiji-tools:0.1.0-SNAPSHOT:ch.unige.biochem.fiji.tools.CLI \
+  ch.unige.biochem:scijava-introspect:0.1.0-SNAPSHOT:ch.unige.biochem.scijava.introspect.CLI \
   source-code ch.epfl.biop.atlas.aligner.command.ABBAStartCommand
 ```
 
@@ -98,7 +98,7 @@ Generate a full snapshot of all commands in one or more packages. Useful as a ba
 ```bash
 jgo -u \
   -r scijava=https://maven.scijava.org/content/groups/public \
-  ch.unige.biochem:fiji-tools:0.1.0-SNAPSHOT:ch.unige.biochem.fiji.tools.CLI \
+  ch.unige.biochem:scijava-introspect:0.1.0-SNAPSHOT:ch.unige.biochem.scijava.introspect.CLI \
   snapshot ch.epfl.biop.atlas.aligner.command > snapshot.json
 ```
 
@@ -111,7 +111,7 @@ Compare two snapshot files to find what changed between versions.
 ```bash
 jgo -u \
   -r scijava=https://maven.scijava.org/content/groups/public \
-  ch.unige.biochem:fiji-tools:0.1.0-SNAPSHOT:ch.unige.biochem.fiji.tools.CLI \
+  ch.unige.biochem:scijava-introspect:0.1.0-SNAPSHOT:ch.unige.biochem.scijava.introspect.CLI \
   diff old.json new.json
 ```
 
@@ -124,7 +124,7 @@ Display the menu hierarchy and package hierarchy of all commands in one or more 
 ```bash
 jgo -u \
   -r scijava=https://maven.scijava.org/content/groups/public \
-  ch.unige.biochem:fiji-tools:0.1.0-SNAPSHOT:ch.unige.biochem.fiji.tools.CLI \
+  ch.unige.biochem:scijava-introspect:0.1.0-SNAPSHOT:ch.unige.biochem.scijava.introspect.CLI \
   tree ch.epfl.biop.atlas.aligner.command
 ```
 
@@ -158,17 +158,17 @@ Returns plain text with two sections:
 ```bash
 jgo -u \
   -r scijava=https://maven.scijava.org/content/groups/public \
-  ch.unige.biochem:fiji-tools:0.1.0-SNAPSHOT+ch.epfl.biop:BIOP-ABBA:0.9.0:ch.unige.biochem.fiji.tools.CLI \
+  ch.unige.biochem:scijava-introspect:0.1.0-SNAPSHOT+ch.epfl.biop:BIOP-ABBA:0.9.0:ch.unige.biochem.scijava.introspect.CLI \
   snapshot ch.epfl.biop.atlas.aligner.command > old.json
 
 jgo -u \
   -r scijava=https://maven.scijava.org/content/groups/public \
-  ch.unige.biochem:fiji-tools:0.1.0-SNAPSHOT+ch.epfl.biop:BIOP-ABBA:0.10.4:ch.unige.biochem.fiji.tools.CLI \
+  ch.unige.biochem:scijava-introspect:0.1.0-SNAPSHOT+ch.epfl.biop:BIOP-ABBA:0.10.4:ch.unige.biochem.scijava.introspect.CLI \
   snapshot ch.epfl.biop.atlas.aligner.command > new.json
 
 jgo -u \
   -r scijava=https://maven.scijava.org/content/groups/public \
-  ch.unige.biochem:fiji-tools:0.1.0-SNAPSHOT:ch.unige.biochem.fiji.tools.CLI \
+  ch.unige.biochem:scijava-introspect:0.1.0-SNAPSHOT:ch.unige.biochem.scijava.introspect.CLI \
   diff old.json new.json
 ```
 
@@ -185,14 +185,14 @@ To give an LLM access to this tool from another repository's `CLAUDE.md`, add a 
 ## Fiji Command Introspection
 
 You have access to a CLI tool that introspects Fiji/ImageJ plugin commands.
-No running Fiji instance is needed. See the fiji-tools README for full documentation.
+No running Fiji instance is needed. See the scijava-introspect README for full documentation.
 
-Base invocation (run after `mvn clean install` in the fiji-tools directory):
+Base invocation (run after `mvn clean install` in the scijava-introspect directory):
 
 ​```bash
 jgo -u \
   -r scijava=https://maven.scijava.org/content/groups/public \
-  ch.unige.biochem:fiji-tools:0.1.0-SNAPSHOT:ch.unige.biochem.fiji.tools.CLI \
+  ch.unige.biochem:scijava-introspect:0.1.0-SNAPSHOT:ch.unige.biochem.scijava.introspect.CLI \
   <subcommand> <args...>
 ​```
 

@@ -1,4 +1,4 @@
-package ch.unige.biochem.fiji.tools;
+package ch.unige.biochem.scijava.introspect;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -25,9 +25,9 @@ import java.util.TreeMap;
 import java.util.TreeSet;
 
 /**
- * CLI entry point for fiji-tools.
+ * CLI entry point for scijava-introspect.
  *
- * Usage: java -cp &lt;classpath&gt; ch.unige.biochem.fiji.tools.CLI &lt;subcommand&gt; &lt;args...&gt;
+ * Usage: java -cp &lt;classpath&gt; ch.unige.biochem.scijava.introspect.CLI &lt;subcommand&gt; &lt;args...&gt;
  *
  * Subcommands:
  *   list-commands &lt;package1&gt; [package2 ...]
@@ -368,7 +368,7 @@ public class CLI {
     }
 
     private static String usageMessage() {
-        return "Usage: ch.unige.biochem.fiji.tools.CLI <subcommand> <args...>\n"
+        return "Usage: ch.unige.biochem.scijava.introspect.CLI <subcommand> <args...>\n"
                 + "\n"
                 + "Subcommands:\n"
                 + "  list-commands <package1> [package2 ...]         List command class names in packages\n"

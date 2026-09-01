@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-**fiji-tools** is a Java CLI that introspects SciJava/ImageJ2 commands via reflection: it lists them,
+**scijava-introspect** is a Java CLI that introspects SciJava/ImageJ2 commands via reflection: it lists them,
 describes their `@Parameter` inputs and outputs as JSON or Markdown, fetches their source from GitHub,
 snapshots a package, and diffs two snapshots. It is the offline half of the tooling behind a Fiji MCP
 server — **no running Fiji instance is ever needed**, only the target plugin classes on the classpath
@@ -28,9 +28,9 @@ dependency resolution.
 
 ## Architecture
 
-Main source lives in package `ch.unige.biochem.fiji.tools`:
+Main source lives in package `ch.unige.biochem.scijava.introspect`:
 
-- **CLI** — the only entry point (`ch.unige.biochem.fiji.tools.CLI`, also the pom's `main-class`).
+- **CLI** — the only entry point (`ch.unige.biochem.scijava.introspect.CLI`, also the pom's `main-class`).
   Parses the subcommand and delegates. `main` redirects `System.out` to `System.err` for the duration
   of `run()`, so that third-party logging cannot corrupt the machine-readable payload; only the payload
   is written to the real stdout at the end. All logic lives in the package-private `run(String[])`,

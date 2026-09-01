@@ -13,12 +13,12 @@
 	</parent>
 
 	<groupId>ch.unige.biochem</groupId>
-	<artifactId>fiji-tools</artifactId>
+	<artifactId>scijava-introspect</artifactId>
 	<version>0.1.0-SNAPSHOT</version>
 
-	<name>Fiji Tools</name>
+	<name>SciJava Introspect</name>
 	<description>A CLI for introspecting SciJava/ImageJ2 commands, used to build MCP servers and documentation for Fiji</description>
-	<url>https://github.com/unige-biochem/fiji-tools</url>
+	<url>https://github.com/unige-biochem/scijava-introspect</url>
 	<inceptionYear>2026</inceptionYear>
 	<organization>
 		<name>University of Geneva, Department of Biochemistry</name>
@@ -65,15 +65,15 @@
 	</mailingLists>
 
 	<scm>
-		<connection>scm:git:https://github.com/unige-biochem/fiji-tools</connection>
-		<developerConnection>scm:git:git@github.com:unige-biochem/fiji-tools</developerConnection>
+		<connection>scm:git:https://github.com/unige-biochem/scijava-introspect</connection>
+		<developerConnection>scm:git:git@github.com:unige-biochem/scijava-introspect</developerConnection>
 		<tag>HEAD</tag>
-		<url>https://github.com/unige-biochem/fiji-tools</url>
+		<url>https://github.com/unige-biochem/scijava-introspect</url>
 	</scm>
 
 	<issueManagement>
 		<system>GitHub Issues</system>
-		<url>https://github.com/unige-biochem/fiji-tools/issues</url>
+		<url>https://github.com/unige-biochem/scijava-introspect/issues</url>
 	</issueManagement>
 
 	<ciManagement>
@@ -81,8 +81,8 @@
 	</ciManagement>
 
 	<properties>
-		<package-name>ch.unige.biochem.fiji.tools</package-name>
-		<main-class>ch.unige.biochem.fiji.tools.CLI</main-class>
+		<package-name>ch.unige.biochem.scijava.introspect</package-name>
+		<main-class>ch.unige.biochem.scijava.introspect.CLI</main-class>
 		<license.licenseName>mit</license.licenseName>
 		<license.copyrightOwners>University of Geneva</license.copyrightOwners>
 		<reflections.version>0.10.2</reflections.version>

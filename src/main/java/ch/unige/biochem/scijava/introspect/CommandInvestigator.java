@@ -1,4 +1,4 @@
-package ch.unige.biochem.fiji.tools;
+package ch.unige.biochem.scijava.introspect;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;

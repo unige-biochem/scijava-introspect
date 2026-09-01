@@ -1,4 +1,4 @@
-package ch.unige.biochem.fiji.tools;
+package ch.unige.biochem.scijava.introspect;
 
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
@@ -44,7 +44,7 @@ public class CLITest {
 
     @Test
     public void listCommandsReturnsJsonArray() {
-        CLI.Result result = CLI.run(new String[]{"list-commands", "ch.unige.biochem.fiji.tools"});
+        CLI.Result result = CLI.run(new String[]{"list-commands", "ch.unige.biochem.scijava.introspect"});
         assertEquals(0, result.exitCode);
         assertNull(result.stderr);
 
@@ -54,7 +54,7 @@ public class CLITest {
         // All entries should be strings starting with the package prefix
         for (JsonElement el : arr) {
             assertTrue(el.isJsonPrimitive());
-            assertTrue(el.getAsString().startsWith("ch.unige.biochem.fiji.tools."));
+            assertTrue(el.getAsString().startsWith("ch.unige.biochem.scijava.introspect."));
         }
     }
 
@@ -70,9 +70,9 @@ public class CLITest {
     @Test
     public void listCommandsMultiplePackagesMergesResults() {
         // Run with two copies of the same package — results should be combined
-        CLI.Result single = CLI.run(new String[]{"list-commands", "ch.unige.biochem.fiji.tools"});
+        CLI.Result single = CLI.run(new String[]{"list-commands", "ch.unige.biochem.scijava.introspect"});
         CLI.Result doubled = CLI.run(new String[]{"list-commands",
-                "ch.unige.biochem.fiji.tools", "ch.unige.biochem.fiji.tools"});
+                "ch.unige.biochem.scijava.introspect", "ch.unige.biochem.scijava.introspect"});
 
         JsonArray singleArr = JsonParser.parseString(single.stdout).getAsJsonArray();
         JsonArray doubledArr = JsonParser.parseString(doubled.stdout).getAsJsonArray();
@@ -84,14 +84,14 @@ public class CLITest {
     @Test
     public void describeCommandReturnsCommandInfo() {
         CLI.Result result = CLI.run(new String[]{"describe-command",
-                "ch.unige.biochem.fiji.tools.DummySumCommand"});
+                "ch.unige.biochem.scijava.introspect.DummySumCommand"});
         assertEquals(0, result.exitCode);
 
         JsonArray arr = JsonParser.parseString(result.stdout).getAsJsonArray();
         assertEquals(1, arr.size());
 
         JsonObject cmd = arr.get(0).getAsJsonObject();
-        assertEquals("ch.unige.biochem.fiji.tools.DummySumCommand", cmd.get("name").getAsString());
+        assertEquals("ch.unige.biochem.scijava.introspect.DummySumCommand", cmd.get("name").getAsString());
         assertTrue(cmd.has("input"));
         assertTrue(cmd.has("output"));
     }
@@ -99,8 +99,8 @@ public class CLITest {
     @Test
     public void describeCommandMultipleClassesMergesIntoOneArray() {
         CLI.Result result = CLI.run(new String[]{"describe-command",
-                "ch.unige.biochem.fiji.tools.DummySumCommand",
-                "ch.unige.biochem.fiji.tools.DummySumCommand"});
+                "ch.unige.biochem.scijava.introspect.DummySumCommand",
+                "ch.unige.biochem.scijava.introspect.DummySumCommand"});
         assertEquals(0, result.exitCode);
 
         JsonArray arr = JsonParser.parseString(result.stdout).getAsJsonArray();
@@ -137,7 +137,7 @@ public class CLITest {
     @Test
     public void describeCommandMixesValidAndInvalidClasses() {
         CLI.Result result = CLI.run(new String[]{"describe-command",
-                "ch.unige.biochem.fiji.tools.DummySumCommand",
+                "ch.unige.biochem.scijava.introspect.DummySumCommand",
                 "com.nonexistent.FakeClass"});
         assertEquals(0, result.exitCode);
 
@@ -165,11 +165,11 @@ public class CLITest {
     @Test@Ignore
     public void sourceCodeFetchesActualSource() {
         CLI.Result result = CLI.run(new String[]{"source-code",
-                "ch.unige.biochem.fiji.tools.DummySumCommand"});
+                "ch.unige.biochem.scijava.introspect.DummySumCommand"});
         assertEquals(0, result.exitCode);
 
         JsonObject obj = JsonParser.parseString(result.stdout).getAsJsonObject();
-        String source = obj.get("ch.unige.biochem.fiji.tools.DummySumCommand").getAsString();
+        String source = obj.get("ch.unige.biochem.scijava.introspect.DummySumCommand").getAsString();
         // The source should contain the class declaration
         assertTrue(source.contains("public class DummySumCommand"));
         assertFalse(source.startsWith("Error:"));
@@ -179,7 +179,7 @@ public class CLITest {
 
     @Test
     public void snapshotReturnsObjectKeyedByClassName() {
-        CLI.Result result = CLI.run(new String[]{"snapshot", "ch.unige.biochem.fiji.tools"});
+        CLI.Result result = CLI.run(new String[]{"snapshot", "ch.unige.biochem.scijava.introspect"});
         assertEquals(0, result.exitCode);
         assertNull(result.stderr);
 
@@ -188,7 +188,7 @@ public class CLITest {
 
         // Each key should be a class name, each value should have "name", "input", "output"
         for (String key : obj.keySet()) {
-            assertTrue(key.startsWith("ch.unige.biochem.fiji.tools."));
+            assertTrue(key.startsWith("ch.unige.biochem.scijava.introspect."));
             JsonObject cmd = obj.get(key).getAsJsonObject();
             assertEquals(key, cmd.get("name").getAsString());
             assertTrue(cmd.has("input"));
@@ -208,8 +208,8 @@ public class CLITest {
     @Test
     public void snapshotIsDeterministic() {
         // Running snapshot twice should produce identical output
-        CLI.Result r1 = CLI.run(new String[]{"snapshot", "ch.unige.biochem.fiji.tools"});
-        CLI.Result r2 = CLI.run(new String[]{"snapshot", "ch.unige.biochem.fiji.tools"});
+        CLI.Result r1 = CLI.run(new String[]{"snapshot", "ch.unige.biochem.scijava.introspect"});
+        CLI.Result r2 = CLI.run(new String[]{"snapshot", "ch.unige.biochem.scijava.introspect"});
 
         JsonObject o1 = JsonParser.parseString(r1.stdout).getAsJsonObject();
         JsonObject o2 = JsonParser.parseString(r2.stdout).getAsJsonObject();
@@ -326,7 +326,7 @@ public class CLITest {
 
     @Test
     public void treeReturnsBothHierarchiesAsPlainText() {
-        CLI.Result result = CLI.run(new String[]{"tree", "ch.unige.biochem.fiji.tools"});
+        CLI.Result result = CLI.run(new String[]{"tree", "ch.unige.biochem.scijava.introspect"});
         assertEquals(0, result.exitCode);
         assertNull(result.stderr);
 
