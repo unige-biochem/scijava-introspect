@@ -48,7 +48,12 @@ public class CLI {
         // corrupt the JSON/text payload. Redirect System.out to System.err for the
         // duration of run() so any such logging is preserved as a diagnostic on stderr
         // instead, then restore the real stdout and write only the payload to it.
-        java.io.PrintStream realOut = System.out;
+        // The payload must also survive the platform default encoding. On Windows the
+        // console code page (e.g. cp1252) cannot represent the box-drawing characters
+        // that `tree` emits, and the JVM silently degrades each one to '?'. Pin both
+        // streams to UTF-8 so output is identical on every platform.
+        java.io.PrintStream realOut = utf8Stream(java.io.FileDescriptor.out);
+        System.setErr(utf8Stream(java.io.FileDescriptor.err));
         System.setOut(System.err);
         Result result;
         try {
@@ -63,6 +68,23 @@ public class CLI {
             realOut.println(result.stdout);
         }
         System.exit(result.exitCode);
+    }
+
+    /**
+     * Wraps a file descriptor in a UTF-8 PrintStream. The JVM picks stdout's encoding
+     * from the console code page, which on Windows mangles anything outside it -- most
+     * visibly the box-drawing characters of the {@code tree} subcommand, which arrive
+     * as '?'. Callers therefore get UTF-8 regardless of the console they run under.
+     */
+    private static java.io.PrintStream utf8Stream(java.io.FileDescriptor fd) {
+        try {
+            return new java.io.PrintStream(
+                new java.io.FileOutputStream(fd), true, StandardCharsets.UTF_8.name());
+        }
+        catch (java.io.UnsupportedEncodingException exc) {
+            // UTF-8 support is mandated by the JVM specification.
+            throw new IllegalStateException("UTF-8 unavailable", exc);
+        }
     }
 
     /**

@@ -41,7 +41,10 @@ Main source lives in package `ch.unige.biochem.scijava.introspect`:
 - **CLI** — the only entry point (`ch.unige.biochem.scijava.introspect.CLI`, also the pom's `main-class`).
   Parses the subcommand and delegates. `main` redirects `System.out` to `System.err` for the duration
   of `run()`, so that third-party logging cannot corrupt the machine-readable payload; only the payload
-  is written to the real stdout at the end. All logic lives in the package-private `run(String[])`,
+  is written to the real stdout at the end. Both streams are pinned to UTF-8 via `utf8Stream`, because
+  the JVM otherwise takes stdout's encoding from the console code page — on Windows that silently
+  degrades the box-drawing characters of `tree` to `?`. Do not remove this: the damage lands in
+  committed output files, not just on screen. All logic lives in the package-private `run(String[])`,
   which returns a `Result` (stdout / stderr / exit code) instead of exiting — that is what the tests
   drive.
 - **CommandIntrospector** — the reflection layer. Discovers `Command` subclasses in a package via
@@ -72,6 +75,22 @@ Key patterns:
 | `tree` | `<package> [package2 ...]` | Plain-text menu hierarchy and package hierarchy trees |
 
 See `README.md` for the jgo invocations.
+
+## Running via jgo
+
+The README carries the full invocation. Three things bite, all of them jgo 3.1.0 behaviour
+rather than anything in this repo:
+
+- **`-r name=url` is broken** — it strips the scheme. Put repositories in `~/.jgorc` instead.
+- **`--class-path-only` is mandatory.** On the module path `scijava-common` and `scijava-search`
+  both export `org.scijava.plugin` to `reflections`, and the JVM aborts building the boot layer.
+- **`--lenient` is mandatory.** A transitive SciJava POM uses `${project.parent.version}`, which
+  jgo's resolver leaves uninterpolated.
+
+The main class attaches to the **first** coordinate, with `+` dependencies after it. Reversing
+that order makes jgo parse the main class as a Maven classifier on the trailing dependency.
+
+Pass `-u` after any `mvn install`, or jgo will relaunch the previously cached jar.
 
 ## Tests
 

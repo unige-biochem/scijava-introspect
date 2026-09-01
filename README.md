@@ -5,20 +5,51 @@ A CLI for introspecting SciJava/ImageJ2 plugin commands — list them, describe 
 ## Prerequisites
 
 - Java 9+
-- [jgo](https://github.com/scijava/jgo) on your PATH
+- [jgo](https://github.com/scijava/jgo) on your PATH (tested against jgo 3.1.0)
 - Build and install locally first:
 
 ```bash
 mvn clean install
 ```
 
+### Maven repositories
+
+jgo 3.1.0's `-r name=url` flag corrupts the URL it is given: it strips the scheme and then
+fails with `Invalid URL '//maven.scijava.org/...': No scheme supplied`. Declare the SciJava
+repository in `~/.jgorc` instead, and drop `-r` from the command line:
+
+```ini
+[repositories]
+scijava.public = https://maven.scijava.org/content/groups/public
+```
+
+### Required jgo flags
+
+Both flags below are needed on every invocation; without them jgo fails before `main` runs.
+
+| Flag | Why |
+|---|---|
+| `--class-path-only` | jgo 3.x splits jars between the module path and the classpath. On the module path `scijava-common` and `scijava-search` both export `org.scijava.plugin` to `reflections`, and the JVM aborts with `ResolutionException` while building the boot layer. This is a consequence of the deliberately narrow dependency set: nothing here needs JPMS. |
+| `--lenient` | A transitive POM in the SciJava tree declares `com.yahoo.datasketches:memory:${project.parent.version}`, which jgo's resolver does not interpolate. The artifact is unused at runtime, so downgrading the failure to a warning is safe. |
+
+### Endpoint syntax
+
+The main class goes on the **first** artifact, and `+` dependencies follow it:
+
+```
+ch.unige.biochem:scijava-introspect:0.1.0-SNAPSHOT:ch.unige.biochem.scijava.introspect.CLI+<group>:<artifact>:<version>
+```
+
+Putting the main class last (`...:0.1.0-SNAPSHOT+<dep>:<MainClass>`) makes jgo read it as a
+Maven *classifier* on the trailing dependency, which then fails to resolve:
+`Artifact ch.epfl.biop:bigdataviewer-biop-tools:jar:ch.unige.biochem.scijava.introspect.CLI:0.21.0 not found`.
+
 ## Usage
 
 All subcommands follow this pattern:
 
 ```bash
-jgo -u \
-  -r scijava=https://maven.scijava.org/content/groups/public \
+jgo -u --lenient --class-path-only \
   ch.unige.biochem:scijava-introspect:0.1.0-SNAPSHOT:ch.unige.biochem.scijava.introspect.CLI \
   <subcommand> <args...>
 ```
@@ -28,9 +59,8 @@ The `-u` flag forces jgo to refresh its cache — use it after a new `mvn instal
 To add plugin dependencies without touching `pom.xml`, append them with `+`:
 
 ```bash
-jgo -u \
-  -r scijava=https://maven.scijava.org/content/groups/public \
-  ch.unige.biochem:scijava-introspect:0.1.0-SNAPSHOT+ch.epfl.biop:BIOP-ABBA:0.10.4:ch.unige.biochem.scijava.introspect.CLI \
+jgo -u --lenient --class-path-only \
+  ch.unige.biochem:scijava-introspect:0.1.0-SNAPSHOT:ch.unige.biochem.scijava.introspect.CLI+ch.epfl.biop:BIOP-ABBA:0.10.4 \
   list-commands ch.epfl.biop.atlas.aligner.command
 ```
 
@@ -41,8 +71,7 @@ jgo -u \
 List all command class names in a package.
 
 ```bash
-jgo -u \
-  -r scijava=https://maven.scijava.org/content/groups/public \
+jgo -u --lenient --class-path-only \
   ch.unige.biochem:scijava-introspect:0.1.0-SNAPSHOT:ch.unige.biochem.scijava.introspect.CLI \
   list-commands ch.epfl.biop.atlas.aligner.command
 ```
@@ -54,8 +83,7 @@ Returns a JSON array of fully qualified class names.
 Get structured descriptions of one or more commands (inputs, outputs, types, labels, descriptions).
 
 ```bash
-jgo -u \
-  -r scijava=https://maven.scijava.org/content/groups/public \
+jgo -u --lenient --class-path-only \
   ch.unige.biochem:scijava-introspect:0.1.0-SNAPSHOT:ch.unige.biochem.scijava.introspect.CLI \
   describe-command ch.epfl.biop.atlas.aligner.command.ABBAStartCommand
 ```
@@ -83,8 +111,7 @@ Returns a JSON array:
 Fetch the Java source code of one or more classes from GitHub.
 
 ```bash
-jgo -u \
-  -r scijava=https://maven.scijava.org/content/groups/public \
+jgo -u --lenient --class-path-only \
   ch.unige.biochem:scijava-introspect:0.1.0-SNAPSHOT:ch.unige.biochem.scijava.introspect.CLI \
   source-code ch.epfl.biop.atlas.aligner.command.ABBAStartCommand
 ```
@@ -96,8 +123,7 @@ Returns a JSON object mapping class name to source string.
 Generate a full snapshot of all commands in one or more packages. Useful as a baseline for version comparison.
 
 ```bash
-jgo -u \
-  -r scijava=https://maven.scijava.org/content/groups/public \
+jgo -u --lenient --class-path-only \
   ch.unige.biochem:scijava-introspect:0.1.0-SNAPSHOT:ch.unige.biochem.scijava.introspect.CLI \
   snapshot ch.epfl.biop.atlas.aligner.command > snapshot.json
 ```
@@ -109,8 +135,7 @@ Returns a JSON object keyed by class name with full command descriptions.
 Compare two snapshot files to find what changed between versions.
 
 ```bash
-jgo -u \
-  -r scijava=https://maven.scijava.org/content/groups/public \
+jgo -u --lenient --class-path-only \
   ch.unige.biochem:scijava-introspect:0.1.0-SNAPSHOT:ch.unige.biochem.scijava.introspect.CLI \
   diff old.json new.json
 ```
@@ -122,8 +147,7 @@ Returns a JSON object with `added`, `removed`, `modified`, and `unchanged` array
 Display the menu hierarchy and package hierarchy of all commands in one or more packages as a human-readable tree.
 
 ```bash
-jgo -u \
-  -r scijava=https://maven.scijava.org/content/groups/public \
+jgo -u --lenient --class-path-only \
   ch.unige.biochem:scijava-introspect:0.1.0-SNAPSHOT:ch.unige.biochem.scijava.introspect.CLI \
   tree ch.epfl.biop.atlas.aligner.command
 ```
@@ -156,18 +180,15 @@ Returns plain text with two sections:
 1. Snapshot the old version and the new version, then diff them:
 
 ```bash
-jgo -u \
-  -r scijava=https://maven.scijava.org/content/groups/public \
-  ch.unige.biochem:scijava-introspect:0.1.0-SNAPSHOT+ch.epfl.biop:BIOP-ABBA:0.9.0:ch.unige.biochem.scijava.introspect.CLI \
+jgo -u --lenient --class-path-only \
+  ch.unige.biochem:scijava-introspect:0.1.0-SNAPSHOT:ch.unige.biochem.scijava.introspect.CLI+ch.epfl.biop:BIOP-ABBA:0.9.0 \
   snapshot ch.epfl.biop.atlas.aligner.command > old.json
 
-jgo -u \
-  -r scijava=https://maven.scijava.org/content/groups/public \
-  ch.unige.biochem:scijava-introspect:0.1.0-SNAPSHOT+ch.epfl.biop:BIOP-ABBA:0.10.4:ch.unige.biochem.scijava.introspect.CLI \
+jgo -u --lenient --class-path-only \
+  ch.unige.biochem:scijava-introspect:0.1.0-SNAPSHOT:ch.unige.biochem.scijava.introspect.CLI+ch.epfl.biop:BIOP-ABBA:0.10.4 \
   snapshot ch.epfl.biop.atlas.aligner.command > new.json
 
-jgo -u \
-  -r scijava=https://maven.scijava.org/content/groups/public \
+jgo -u --lenient --class-path-only \
   ch.unige.biochem:scijava-introspect:0.1.0-SNAPSHOT:ch.unige.biochem.scijava.introspect.CLI \
   diff old.json new.json
 ```
@@ -190,14 +211,14 @@ No running Fiji instance is needed. See the scijava-introspect README for full d
 Base invocation (run after `mvn clean install` in the scijava-introspect directory):
 
 ​```bash
-jgo -u \
-  -r scijava=https://maven.scijava.org/content/groups/public \
+jgo -u --lenient --class-path-only \
   ch.unige.biochem:scijava-introspect:0.1.0-SNAPSHOT:ch.unige.biochem.scijava.introspect.CLI \
   <subcommand> <args...>
 ​```
 
 Key subcommands: `list-commands`, `describe-command`, `source-code`, `snapshot`, `diff`, `tree`.
 ```
+
 ## License
 
 MIT — see [LICENSE](LICENSE).
