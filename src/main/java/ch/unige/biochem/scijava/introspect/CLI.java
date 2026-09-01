@@ -104,7 +104,7 @@ public class CLI {
     private static Result listCommands(String[] packages) {
         JsonArray result = new JsonArray();
         for (String pkg : packages) {
-            List<Class<? extends Command>> commands = CommandInvestigator.getCommandsFromPackage(pkg);
+            List<Class<? extends Command>> commands = CommandIntrospector.getCommandsFromPackage(pkg);
             for (Class<? extends Command> cmd : commands) {
                 result.add(cmd.getName());
             }
@@ -125,7 +125,7 @@ public class CLI {
                     result.add(error);
                     continue;
                 }
-                String json = CommandInvestigator.toJson((Class<? extends Command>) clazz);
+                String json = CommandIntrospector.toJson((Class<? extends Command>) clazz);
                 JsonArray parsed = JsonParser.parseString(json).getAsJsonArray();
                 for (int i = 0; i < parsed.size(); i++) {
                     result.add(parsed.get(i));
@@ -162,7 +162,7 @@ public class CLI {
             for (String className : classNames) {
                 try {
                     Class<?> clazz = Class.forName(className);
-                    String source = CommandInvestigator.getSourceCode(clazz, context);
+                    String source = CommandIntrospector.getSourceCode(clazz, context);
                     result.addProperty(className, source);
                 } catch (ClassNotFoundException e) {
                     result.addProperty(className, "Error: Class not found: " + e.getMessage());
@@ -188,10 +188,10 @@ public class CLI {
     private static Result snapshot(String[] packages) {
         JsonObject result = new JsonObject();
         for (String pkg : packages) {
-            List<Class<? extends Command>> commands = CommandInvestigator.getCommandsFromPackage(pkg);
+            List<Class<? extends Command>> commands = CommandIntrospector.getCommandsFromPackage(pkg);
             for (Class<? extends Command> cmd : commands) {
                 try {
-                    String json = CommandInvestigator.toJson(cmd);
+                    String json = CommandIntrospector.toJson(cmd);
                     JsonArray parsed = JsonParser.parseString(json).getAsJsonArray();
                     if (parsed.size() > 0) {
                         result.add(cmd.getName(), parsed.get(0));
@@ -297,12 +297,12 @@ public class CLI {
     private static Result tree(String[] packages) {
         List<String[]> entries = new ArrayList<>(); // each: [menuPath, className]
         for (String pkg : packages) {
-            List<Class<? extends Command>> commands = CommandInvestigator.getCommandsFromPackage(pkg);
+            List<Class<? extends Command>> commands = CommandIntrospector.getCommandsFromPackage(pkg);
             for (Class<? extends Command> cmd : commands) {
                 String menuPath;
                 try {
                     Plugin plugin = cmd.getAnnotation(Plugin.class);
-                    menuPath = CommandInvestigator.resolveMenuPath(plugin);
+                    menuPath = CommandIntrospector.resolveMenuPath(plugin);
                 } catch (LinkageError e) {
                     // Keep the command in the tree; only its menu placement is unknown
                     menuPath = null;

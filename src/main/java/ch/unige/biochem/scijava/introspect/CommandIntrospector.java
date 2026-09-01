@@ -41,7 +41,7 @@ import java.util.List;
  * Markdown. Nothing here needs a running Fiji instance, only the commands themselves on
  * the classpath.
  */
-public class CommandInvestigator {
+public class CommandIntrospector {
 
     private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
 

@@ -44,7 +44,7 @@ Main source lives in package `ch.unige.biochem.scijava.introspect`:
   is written to the real stdout at the end. All logic lives in the package-private `run(String[])`,
   which returns a `Result` (stdout / stderr / exit code) instead of exiting — that is what the tests
   drive.
-- **CommandInvestigator** — the reflection layer. Discovers `Command` subclasses in a package via
+- **CommandIntrospector** — the reflection layer. Discovers `Command` subclasses in a package via
   `Reflections`, and renders one command as JSON (`toJson`) or Markdown (`toMd`). Also fetches source
   code from GitHub via SciJava's `SourceFinder`.
 
