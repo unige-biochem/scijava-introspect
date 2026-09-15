@@ -23,7 +23,7 @@ classpath — that is the caller's job.
 
 ## Build
 
-Maven project inheriting from `pom-scijava` 43.0.0. Java 9 source/target.
+Maven project inheriting from `pom-scijava` 45.1.0. Java 9 source/target.
 
 ```bash
 mvn clean install        # build and install locally
