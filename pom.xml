@@ -82,7 +82,7 @@
 		<package-name>ch.unige.biochem.scijava.introspect</package-name>
 		<main-class>ch.unige.biochem.scijava.introspect.CLI</main-class>
 		<license.licenseName>mit</license.licenseName>
-		<license.copyrightOwners>University of Geneva</license.copyrightOwners>
+		<license.copyrightOwners>University of Geneva, Department of Biochemistry</license.copyrightOwners>
 		<reflections.version>0.10.2</reflections.version>
 
 		<!-- NB: Deploy releases to the SciJava Maven repository. -->
