@@ -46,9 +46,15 @@ import org.scijava.Context;
 import org.scijava.ItemIO;
 import org.scijava.ItemVisibility;
 import org.scijava.command.Command;
+import org.scijava.command.CommandInfo;
+import org.scijava.command.CommandService;
 import org.scijava.command.DynamicCommand;
 import org.scijava.command.InteractiveCommand;
 import org.scijava.log.LogService;
+import org.scijava.module.MethodCallException;
+import org.scijava.module.Module;
+import org.scijava.module.ModuleItem;
+import org.scijava.module.ModuleService;
 import org.scijava.plugin.Parameter;
 import org.scijava.plugin.Menu;
 import org.scijava.plugin.Plugin;
@@ -59,7 +65,9 @@ import org.scijava.widget.Button;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Reflection-based introspection of SciJava {@link Command} classes: discovery within a
@@ -188,6 +196,9 @@ public class CommandIntrospector {
         if (DynamicCommand.class.isAssignableFrom(commandClass)) {
             jsonObject.addProperty("dynamic", true);
         }
+        if (hasInitializer(commandClass)) {
+            jsonObject.addProperty("hasInitializer", true);
+        }
 
         List<Field> allFields = collectParameterFields(commandClass);
         Object instance = newInstance(commandClass);
@@ -198,6 +209,126 @@ public class CommandIntrospector {
         jsonObject.add("input", toJsonFields(inputFields(allFields), instance));
         jsonObject.add("output", toJsonFields(outputFields(allFields), null));
         return jsonObject;
+    }
+
+    /**
+     * Whether values can be computed when the command is initialized, before its dialog shows: the
+     * command, or one of its superclasses outside SciJava, declares {@code initialize()}, or its
+     * {@link Plugin} or one of its {@link Parameter}s names an initializer method. Such defaults and
+     * choices are only described by {@link #describeInitialized(Context, Class, Map)}.
+     */
+    static boolean hasInitializer(Class<?> commandClass) {
+        if (!commandClass.getAnnotation(Plugin.class).initializer().isEmpty()) {
+            return true;
+        }
+        for (Class<?> c = commandClass; c != null && !c.getName().startsWith("org.scijava."); c = c.getSuperclass()) {
+            if (Arrays.stream(c.getDeclaredMethods())
+                    .anyMatch(m -> m.getName().equals("initialize") && m.getParameterCount() == 0)) {
+                return true;
+            }
+        }
+        return collectParameterFields(commandClass).stream()
+                .filter(f -> f.isAnnotationPresent(Parameter.class))
+                .anyMatch(f -> !f.getAnnotation(Parameter.class).initializer().isEmpty());
+    }
+
+    /**
+     * Describes a command as a caller about to run it sees it: the command is created in the given
+     * context, the preset inputs are set, then its initializers run, as SciJava does before showing
+     * the dialog of a command. Defaults, choices and messages are read from the initialized command,
+     * so values computed by the initializers (choices filled at runtime, defaults depending on another
+     * input) are described, as well as inputs added at runtime by a {@link DynamicCommand}.
+     * <p>
+     * Initializers are the command's own code: they may be slow or have side effects. The command is
+     * not run.
+     *
+     * @param presetInputs inputs set before the initializers run (e.g. the object the command acts on),
+     *        left out of the description
+     * @return the description of {@link #toJson(Class)}, as a single JSON object
+     * @throws IllegalArgumentException if the class carries no {@link Plugin} annotation
+     * @throws IllegalStateException if the command cannot be created or its initializer fails
+     */
+    public static String describeInitialized(Context context, Class<? extends Command> commandClass,
+                                             Map<String, Object> presetInputs) {
+        return GSON.toJson(describeInitializedAsJson(context, commandClass, presetInputs));
+    }
+
+    static JsonObject describeInitializedAsJson(Context context, Class<? extends Command> commandClass,
+                                                Map<String, Object> presetInputs) {
+        JsonObject description = describe(commandClass);
+        if (description == null) {
+            throw new IllegalArgumentException(commandClass.getName() + " has no @Plugin annotation");
+        }
+        CommandInfo info = context.getService(CommandService.class).getCommand(commandClass);
+        if (info == null) {
+            info = new CommandInfo(commandClass); // not in the plugin index
+        }
+        Module module = context.getService(ModuleService.class).createModule(info);
+        if (module == null) {
+            throw new IllegalStateException("Cannot create " + commandClass.getName() + ", see the log");
+        }
+        presetInputs.forEach((name, value) -> {
+            module.setInput(name, value);
+            module.resolveInput(name);
+        });
+        try {
+            module.initialize();
+        } catch (MethodCallException e) {
+            throw new IllegalStateException("The initializer of " + commandClass.getName() + " failed", e);
+        }
+
+        Map<String, JsonObject> described = new LinkedHashMap<>();
+        description.getAsJsonArray("input").forEach(node ->
+                described.put(node.getAsJsonObject().get("name").getAsString(), node.getAsJsonObject()));
+        JsonArray messages = new JsonArray();
+        JsonArray inputs = new JsonArray();
+        for (ModuleItem<?> item : module.getInfo().inputs()) {
+            String name = item.getName();
+            if (item.getVisibility() == ItemVisibility.MESSAGE) {
+                Object text = module.getInput(name);
+                if (text instanceof String) {
+                    String plain = ((String) text).replaceAll("<[^>]*>", " ").replaceAll("\\s+", " ").trim();
+                    if (!plain.isEmpty()) messages.add(plain);
+                }
+                continue;
+            }
+            JsonObject node = described.get(name);
+            if (node == null) {
+                // Added at runtime, or a service: services are never described
+                if (Service.class.isAssignableFrom(item.getType()) || Context.class.equals(item.getType())) {
+                    continue;
+                }
+                node = new JsonObject();
+                node.addProperty("type", item.getType().getSimpleName());
+                node.addProperty("name", name);
+                if (item.getLabel() != null && !item.getLabel().isEmpty()) {
+                    node.addProperty("label", item.getLabel());
+                }
+                if (item.getDescription() != null && !item.getDescription().isEmpty()) {
+                    node.addProperty("description", item.getDescription());
+                }
+                described.put(name, node);
+            }
+            node.remove("default");
+            addDefault(node, module.getInput(name));
+            List<?> choices = item.getChoices();
+            if (choices != null && !choices.isEmpty()) {
+                JsonArray array = new JsonArray();
+                choices.forEach(choice -> array.add(String.valueOf(choice)));
+                node.add("choices", array);
+            }
+        }
+        described.forEach((name, node) -> {
+            if (!presetInputs.containsKey(name)) {
+                inputs.add(node);
+            }
+        });
+        description.remove("messages");
+        if (messages.size() > 0) {
+            description.add("messages", messages);
+        }
+        description.add("input", inputs);
+        return description;
     }
 
     private static JsonArray toJsonFields(List<Field> fields, Object instance) {

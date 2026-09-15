@@ -37,10 +37,10 @@ Both flags below are needed on every invocation; without them jgo fails before `
 The main class goes on the **first** artifact, and `+` dependencies follow it:
 
 ```
-ch.unige.biochem:scijava-introspect:0.1.0-SNAPSHOT:ch.unige.biochem.scijava.introspect.CLI+<group>:<artifact>:<version>
+ch.unige.biochem:scijava-introspect:0.1.0:ch.unige.biochem.scijava.introspect.CLI+<group>:<artifact>:<version>
 ```
 
-Putting the main class last (`...:0.1.0-SNAPSHOT+<dep>:<MainClass>`) makes jgo read it as a
+Putting the main class last (`...:0.1.0+<dep>:<MainClass>`) makes jgo read it as a
 Maven *classifier* on the trailing dependency, which then fails to resolve:
 `Artifact ch.epfl.biop:bigdataviewer-biop-tools:jar:ch.unige.biochem.scijava.introspect.CLI:0.21.0 not found`.
 
@@ -50,7 +50,7 @@ All subcommands follow this pattern:
 
 ```bash
 jgo -u --lenient --class-path-only \
-  ch.unige.biochem:scijava-introspect:0.1.0-SNAPSHOT:ch.unige.biochem.scijava.introspect.CLI \
+  ch.unige.biochem:scijava-introspect:0.1.0:ch.unige.biochem.scijava.introspect.CLI \
   <subcommand> <args...>
 ```
 
@@ -60,7 +60,7 @@ To add plugin dependencies without touching `pom.xml`, append them with `+`:
 
 ```bash
 jgo -u --lenient --class-path-only \
-  ch.unige.biochem:scijava-introspect:0.1.0-SNAPSHOT:ch.unige.biochem.scijava.introspect.CLI+ch.epfl.biop:BIOP-ABBA:0.10.4 \
+  ch.unige.biochem:scijava-introspect:0.1.0:ch.unige.biochem.scijava.introspect.CLI+ch.epfl.biop:BIOP-ABBA:0.10.4 \
   list-commands ch.epfl.biop.atlas.aligner.command
 ```
 
@@ -72,7 +72,7 @@ List all command class names in a package.
 
 ```bash
 jgo -u --lenient --class-path-only \
-  ch.unige.biochem:scijava-introspect:0.1.0-SNAPSHOT:ch.unige.biochem.scijava.introspect.CLI \
+  ch.unige.biochem:scijava-introspect:0.1.0:ch.unige.biochem.scijava.introspect.CLI \
   list-commands ch.epfl.biop.atlas.aligner.command
 ```
 
@@ -84,7 +84,7 @@ Get structured descriptions of one or more commands (inputs, outputs, types, lab
 
 ```bash
 jgo -u --lenient --class-path-only \
-  ch.unige.biochem:scijava-introspect:0.1.0-SNAPSHOT:ch.unige.biochem.scijava.introspect.CLI \
+  ch.unige.biochem:scijava-introspect:0.1.0:ch.unige.biochem.scijava.introspect.CLI \
   describe-command ch.epfl.biop.atlas.aligner.command.ABBAStartCommand
 ```
 
@@ -113,13 +113,33 @@ Besides `type` and `name`, an input may report `label`, `description`, `default`
 instance of the command), `choices`, `required: false`, `style`, `min` and `max`. The texts of the
 message items, without HTML markup, are listed in `messages`.
 
+A command whose defaults or choices can be computed before its dialog shows (it declares
+`initialize()`, or an initializer method in `@Plugin` or `@Parameter`) is flagged with
+`"hasInitializer": true`: the values above are those of a new instance, before initialization.
+
+#### Initialized description (Java API)
+
+To see the values a caller gets, including the ones computed by initializers (choices filled at
+runtime, defaults depending on another input, inputs added by a `DynamicCommand`), describe the
+command from a running SciJava context:
+
+```java
+String json = CommandIntrospector.describeInitialized(context, MyCommand.class,
+        Collections.singletonMap("image", image));
+```
+
+The command is created, the preset inputs are set, then its initializers run, as SciJava does before
+showing a dialog; the command is not run. The result has the shape of one `describe-command` entry,
+without the preset inputs. Initializers are the command's own code: they may be slow or have side
+effects.
+
 ### source-code
 
 Fetch the Java source code of one or more classes from GitHub.
 
 ```bash
 jgo -u --lenient --class-path-only \
-  ch.unige.biochem:scijava-introspect:0.1.0-SNAPSHOT:ch.unige.biochem.scijava.introspect.CLI \
+  ch.unige.biochem:scijava-introspect:0.1.0:ch.unige.biochem.scijava.introspect.CLI \
   source-code ch.epfl.biop.atlas.aligner.command.ABBAStartCommand
 ```
 
@@ -131,7 +151,7 @@ Generate a full snapshot of all commands in one or more packages. Useful as a ba
 
 ```bash
 jgo -u --lenient --class-path-only \
-  ch.unige.biochem:scijava-introspect:0.1.0-SNAPSHOT:ch.unige.biochem.scijava.introspect.CLI \
+  ch.unige.biochem:scijava-introspect:0.1.0:ch.unige.biochem.scijava.introspect.CLI \
   snapshot ch.epfl.biop.atlas.aligner.command > snapshot.json
 ```
 
@@ -143,7 +163,7 @@ Compare two snapshot files to find what changed between versions.
 
 ```bash
 jgo -u --lenient --class-path-only \
-  ch.unige.biochem:scijava-introspect:0.1.0-SNAPSHOT:ch.unige.biochem.scijava.introspect.CLI \
+  ch.unige.biochem:scijava-introspect:0.1.0:ch.unige.biochem.scijava.introspect.CLI \
   diff old.json new.json
 ```
 
@@ -155,7 +175,7 @@ Display the menu hierarchy and package hierarchy of all commands in one or more 
 
 ```bash
 jgo -u --lenient --class-path-only \
-  ch.unige.biochem:scijava-introspect:0.1.0-SNAPSHOT:ch.unige.biochem.scijava.introspect.CLI \
+  ch.unige.biochem:scijava-introspect:0.1.0:ch.unige.biochem.scijava.introspect.CLI \
   tree ch.epfl.biop.atlas.aligner.command
 ```
 
@@ -188,15 +208,15 @@ Returns plain text with two sections:
 
 ```bash
 jgo -u --lenient --class-path-only \
-  ch.unige.biochem:scijava-introspect:0.1.0-SNAPSHOT:ch.unige.biochem.scijava.introspect.CLI+ch.epfl.biop:BIOP-ABBA:0.9.0 \
+  ch.unige.biochem:scijava-introspect:0.1.0:ch.unige.biochem.scijava.introspect.CLI+ch.epfl.biop:BIOP-ABBA:0.9.0 \
   snapshot ch.epfl.biop.atlas.aligner.command > old.json
 
 jgo -u --lenient --class-path-only \
-  ch.unige.biochem:scijava-introspect:0.1.0-SNAPSHOT:ch.unige.biochem.scijava.introspect.CLI+ch.epfl.biop:BIOP-ABBA:0.10.4 \
+  ch.unige.biochem:scijava-introspect:0.1.0:ch.unige.biochem.scijava.introspect.CLI+ch.epfl.biop:BIOP-ABBA:0.10.4 \
   snapshot ch.epfl.biop.atlas.aligner.command > new.json
 
 jgo -u --lenient --class-path-only \
-  ch.unige.biochem:scijava-introspect:0.1.0-SNAPSHOT:ch.unige.biochem.scijava.introspect.CLI \
+  ch.unige.biochem:scijava-introspect:0.1.0:ch.unige.biochem.scijava.introspect.CLI \
   diff old.json new.json
 ```
 
@@ -219,7 +239,7 @@ Base invocation (run after `mvn clean install` in the scijava-introspect directo
 
 ​```bash
 jgo -u --lenient --class-path-only \
-  ch.unige.biochem:scijava-introspect:0.1.0-SNAPSHOT:ch.unige.biochem.scijava.introspect.CLI \
+  ch.unige.biochem:scijava-introspect:0.1.0:ch.unige.biochem.scijava.introspect.CLI \
   <subcommand> <args...>
 ​```
 
