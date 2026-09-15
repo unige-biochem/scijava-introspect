@@ -11,7 +11,7 @@
 
 	<groupId>ch.unige.biochem</groupId>
 	<artifactId>scijava-introspect</artifactId>
-	<version>0.2.0-SNAPSHOT</version>
+	<version>0.2.1-SNAPSHOT</version>
 
 	<name>SciJava Introspect</name>
 	<description>A CLI for introspecting SciJava/ImageJ2 commands, used to build MCP servers and documentation for Fiji</description>
