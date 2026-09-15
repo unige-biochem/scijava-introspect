@@ -167,14 +167,8 @@ public class CLI {
         return Result.success(GSON.toJson(result));
     }
 
-    /**
-     * The class itself was found, but loading it or reading its fields needs a type that is
-     * not on the classpath. This is the common shape of a missing plugin dependency, so it
-     * is reported per class rather than being allowed to abort the whole run.
-     */
     private static String unresolvableMessage(LinkageError e) {
-        return "Class could not be resolved, usually because a dependency is missing from the classpath: "
-                + e.getClass().getSimpleName() + ": " + e.getMessage();
+        return CommandIntrospector.unresolvableMessage(e);
     }
 
     private static Result sourceCode(String[] classNames) {
@@ -206,25 +200,11 @@ public class CLI {
      * Output is a JSON object keyed by fully qualified class name, where each
      * value is the command description (inputs, outputs, etc.).
      */
-    @SuppressWarnings("unchecked")
     private static Result snapshot(String[] packages) {
         JsonObject result = new JsonObject();
         for (String pkg : packages) {
-            List<Class<? extends Command>> commands = CommandIntrospector.getCommandsFromPackage(pkg);
-            for (Class<? extends Command> cmd : commands) {
-                try {
-                    String json = CommandIntrospector.toJson(cmd);
-                    JsonArray parsed = JsonParser.parseString(json).getAsJsonArray();
-                    if (parsed.size() > 0) {
-                        result.add(cmd.getName(), parsed.get(0));
-                    }
-                } catch (LinkageError e) {
-                    JsonObject error = new JsonObject();
-                    error.addProperty("name", cmd.getName());
-                    error.addProperty("error", unresolvableMessage(e));
-                    result.add(cmd.getName(), error);
-                }
-            }
+            CommandIntrospector.describePackageAsJson(pkg, false).entrySet()
+                    .forEach(entry -> result.add(entry.getKey(), entry.getValue()));
         }
         return Result.success(GSON.toJson(result));
     }

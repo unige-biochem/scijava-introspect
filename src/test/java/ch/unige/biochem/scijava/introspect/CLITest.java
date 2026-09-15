@@ -379,4 +379,71 @@ public class CLITest {
                 failed.get("name").getAsString());
         assertTrue(failed.get("error").getAsString().contains("could not be resolved"));
     }
+
+    // --- parameter attributes ---
+
+    private static JsonObject describeOne(String className) {
+        CLI.Result result = CLI.run(new String[]{"describe-command", className});
+        assertEquals(0, result.exitCode);
+        return JsonParser.parseString(result.stdout).getAsJsonArray().get(0).getAsJsonObject();
+    }
+
+    private static JsonObject input(JsonObject command, String name) {
+        for (JsonElement element : command.getAsJsonArray("input")) {
+            if (element.getAsJsonObject().get("name").getAsString().equals(name)) {
+                return element.getAsJsonObject();
+            }
+        }
+        fail("No input " + name);
+        return null;
+    }
+
+    @Test
+    public void describeCommandReportsDefaultsChoicesAndAttributes() {
+        JsonObject cmd = describeOne("ch.unige.biochem.scijava.introspect.DummyOptionsCommand");
+
+        JsonObject format = input(cmd, "format");
+        assertEquals("Decimal", format.get("default").getAsString());
+        assertEquals(2, format.getAsJsonArray("choices").size());
+        assertEquals("Integer", format.getAsJsonArray("choices").get(0).getAsString());
+        assertFalse(format.has("required"));
+
+        JsonObject digits = input(cmd, "digits");
+        assertEquals(3, digits.get("default").getAsInt());
+        assertEquals("0", digits.get("min").getAsString());
+        assertEquals("10", digits.get("max").getAsString());
+
+        // NaN means 'not set': no default is reported
+        assertFalse(input(cmd, "scale").has("default"));
+
+        JsonObject output = input(cmd, "output");
+        assertEquals("save", output.get("style").getAsString());
+        assertFalse(output.get("required").getAsBoolean());
+        assertFalse(output.has("default"));
+    }
+
+    @Test
+    public void describeCommandReportsMessagesWithoutMarkup() {
+        JsonObject cmd = describeOne("ch.unige.biochem.scijava.introspect.DummyOptionsCommand");
+        assertEquals("Note: the number is rounded", cmd.getAsJsonArray("messages").get(0).getAsString());
+        // the message item is not an input
+        for (JsonElement element : cmd.getAsJsonArray("input")) {
+            assertNotEquals("message", element.getAsJsonObject().get("name").getAsString());
+        }
+    }
+
+    @Test
+    public void dynamicCommandsAreOnlyDescribedOnRequest() {
+        String dynamic = "ch.unige.biochem.scijava.introspect.DummyDynamicCommand";
+        JsonObject snapshot = JsonParser.parseString(
+                CLI.run(new String[]{"snapshot", "ch.unige.biochem.scijava.introspect"}).stdout).getAsJsonObject();
+        assertFalse(snapshot.has(dynamic));
+
+        JsonObject withDynamic = JsonParser.parseString(
+                CommandIntrospector.describePackage("ch.unige.biochem.scijava.introspect", true)).getAsJsonObject();
+        assertTrue(withDynamic.has(dynamic));
+        assertTrue(withDynamic.getAsJsonObject(dynamic).get("dynamic").getAsBoolean());
+        assertEquals("region", withDynamic.getAsJsonObject(dynamic).getAsJsonArray("input")
+                .get(0).getAsJsonObject().get("default").getAsString());
+    }
 }

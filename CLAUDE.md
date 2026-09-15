@@ -53,8 +53,14 @@ Main source lives in package `ch.unige.biochem.scijava.introspect`:
 
 Key patterns:
 - Discovery skips abstract classes and interfaces (shared bases, not runnable commands), plus
-  `InteractiveCommand` and `DynamicCommand`, whose parameters only exist at runtime.
+  `InteractiveCommand` and `DynamicCommand`, whose parameters only exist at runtime. In-process callers
+  can keep dynamic commands with `getCommandsFromPackage(pkg, true)` / `describePackage(pkg, true)`: their
+  declared parameters are described and they are flagged `"dynamic": true`. The CLI never includes them.
 - `@Parameter` fields of type `Service`, `Context` or `Button` are filtered out of the docs.
+- Inputs report `choices`, `required: false`, `style`, `min` and `max` from the annotation, and a
+  `default` read from a new instance of the command (no-argument constructor; null, NaN and non-plain
+  values are left out). Message items are not inputs: their texts, stripped of HTML, go to `messages`.
+  If the command cannot be instantiated, defaults and messages are silently omitted.
 - Parameters are collected from the command **and its whole superclass chain**.
 - GitHub URLs are rewritten to `raw.githubusercontent.com` for source fetching.
 - All JSON serialization uses Gson with pretty printing.

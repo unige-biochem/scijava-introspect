@@ -94,17 +94,24 @@ Returns a JSON array:
 [
   {
     "name": "ch.epfl.biop.atlas.aligner.command.ABBAStartCommand",
-    "description": "Starts ABBA from an Atlas",
+    "menuPath": "Plugins>BIOP>Atlas>ABBA - Align Big Brains and Atlases (no GUI)",
+    "description": "Starts an ABBA session without graphical user interface...",
+    "messages": [ "Select the atlas slicing orientation: click a preset or set the anatomical direction of each axis." ],
     "input": [
-      { "type": "Atlas", "name": "ba" },
-      { "type": "String", "name": "x_axis" }
+      { "type": "Atlas", "name": "ba", "label": "Atlas" },
+      { "type": "String", "name": "x_axis", "label": "X axis (sections, left to right)",
+        "choices": [ "AP (Anterior-Posterior)", "PA (Posterior-Anterior)", "..." ] }
     ],
     "output": [
-      { "type": "MultiSlicePositioner", "name": "mp" }
+      { "type": "MultiSlicePositioner", "name": "mp", "label": "ABBA session" }
     ]
   }
 ]
 ```
+
+Besides `type` and `name`, an input may report `label`, `description`, `default` (read from a new
+instance of the command), `choices`, `required: false`, `style`, `min` and `max`. The texts of the
+message items, without HTML markup, are listed in `messages`.
 
 ### source-code
 
